@@ -93,3 +93,75 @@ def calculate_dealer_metrics(sales_list):
         "highest_sale": highest,
         "lowest_sale": lowest,
     }
+
+# ═══════════════════════════════════════════════════
+# NEW FEATURE: Percentage Calculations
+# ═══════════════════════════════════════════════════
+
+
+def percentage(value, percent):
+    """Calculate a percentage of a value.
+
+    Tekion use case:
+      Calculate dealer commission.
+      If dealer gets 3% commission on a $50,000 sale:
+        commission = percentage(50000, 3)   → $1,500
+
+    Args:
+        value: The base value (e.g., sale price)
+        percent: The percentage to calculate (e.g., 3 for 3%)
+
+    Returns:
+        The calculated amount.
+        percentage(200, 10) → 20.0  (10% of 200 = 20)
+    """
+    return (value * percent) / 100
+
+
+def percentage_change(old_value, new_value):
+    """Calculate how much something changed in percentage.
+
+    Tekion use case:
+      How much did dealer sales grow month over month?
+      January: $500,000
+      February: $600,000
+      Growth: percentage_change(500000, 600000) → 20.0%
+
+    Args:
+        old_value: The original value
+        new_value: The new value
+
+    Returns:
+        Percentage change as a number.
+        Positive = growth, Negative = decline.
+
+    Raises:
+        ValueError: If old_value is zero (can't calculate change from 0).
+    """
+    if old_value == 0:
+        raise ValueError("Old value cannot be zero")
+    return round(((new_value - old_value) / old_value) * 100, 2)
+
+
+def apply_discount(price, discount_percent):
+    """Apply a discount to a price.
+
+    Tekion use case:
+      Calculate discounted vehicle price.
+      Vehicle listed at $40,000 with 10% discount:
+        final_price = apply_discount(40000, 10)  → $36,000
+
+    Args:
+        price: Original price
+        discount_percent: Discount percentage (must be 0-100)
+
+    Returns:
+        Price after discount applied.
+
+    Raises:
+        ValueError: If discount is not between 0 and 100.
+    """
+    if discount_percent < 0 or discount_percent > 100:
+        raise ValueError("Discount must be between 0 and 100")
+    discount_amount = percentage(price, discount_percent)
+    return price - discount_amount
