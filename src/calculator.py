@@ -9,7 +9,7 @@ def add(a, b):
       tuesday_sales = 22000
       total = add(monday_sales, tuesday_sales)  → 37000
     """
-    return a + b
+    return a - b
 
 
 def subtract(a, b):
