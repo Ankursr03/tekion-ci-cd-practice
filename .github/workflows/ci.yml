@@ -1,0 +1,281 @@
+# ═══════════════════════════════════════════════════════════════════
+# FILE: .github/workflows/ci.yml
+#
+# This is a GitHub Actions WORKFLOW file.
+#
+# WHAT IS A WORKFLOW?
+#   A workflow = a set of automated steps that GitHub runs for you.
+#   Like a recipe:
+#     "When someone pushes code, do these steps:
+#      1. Get a computer
+#      2. Install Python
+#      3. Install dependencies
+#      4. Run tests
+#      5. Report results"
+#
+# WHY YAML FORMAT?
+#   YAML = a human-readable format for configuration files.
+#   It uses INDENTATION (spaces) to show structure.
+#   ⚠️ YAML is VERY strict about spaces:
+#     - Use SPACES, not TABS
+#     - Indentation must be consistent (2 spaces per level)
+#     - A wrong space can break the entire file
+#
+# WHERE MUST THIS FILE BE?
+#   EXACTLY at: .github/workflows/ci.yml
+#   GitHub Actions ONLY looks in .github/workflows/
+#   Any .yml file in that folder becomes a workflow.
+# ═══════════════════════════════════════════════════════════════════
+
+
+# ─────────────────────────────────────────────────────
+# SECTION 1: NAME
+# ─────────────────────────────────────────────────────
+# This is the display name of your workflow.
+# It appears in the GitHub Actions tab.
+# Choose something descriptive.
+
+name: CI Pipeline
+
+# WHAT YOU'LL SEE ON GITHUB:
+#   Actions tab → "CI Pipeline" (this name)
+
+
+# ─────────────────────────────────────────────────────
+# SECTION 2: TRIGGERS (on:)
+# ─────────────────────────────────────────────────────
+# WHEN should this workflow run?
+# "on:" defines the events that trigger this workflow.
+
+on:
+
+  # TRIGGER 1: When code is pushed
+  push:
+    branches:
+      - main
+      - develop
+    # WHAT THIS MEANS:
+    #   "Run this workflow when someone pushes code
+    #    to the 'main' branch OR the 'develop' branch."
+    #
+    #   Push to main → ✅ Triggers this workflow
+    #   Push to develop → ✅ Triggers this workflow
+    #   Push to feature/xyz → ❌ Does NOT trigger
+    #
+    # WHY ONLY MAIN AND DEVELOP?
+    #   At Tekion, main = production code.
+    #   develop = integration branch.
+    #   We want to test code when it reaches these important branches.
+
+  # TRIGGER 2: When a Pull Request is opened or updated
+  pull_request:
+    branches:
+      - main
+      - develop
+    # WHAT THIS MEANS:
+    #   "Run this workflow when someone creates or updates
+    #    a Pull Request that targets main or develop."
+    #
+    #   PR: feature/xyz → develop  → ✅ Triggers (targets develop)
+    #   PR: feature/xyz → main     → ✅ Triggers (targets main)
+    #
+    # WHY RUN ON PRs?
+    #   This is the KEY use case for CI:
+    #   Before merging code, verify it doesn't break anything.
+    #   The PR page will show ✅ or ❌ based on the CI result.
+    #   Reviewers can see if your code passes tests.
+
+
+# ─────────────────────────────────────────────────────
+# SECTION 3: JOBS
+# ─────────────────────────────────────────────────────
+# WHAT should the workflow do?
+# Jobs contain the actual work.
+# Each job runs on its own fresh machine.
+
+jobs:
+
+  # ── JOB DEFINITION ──
+  # "test" is the JOB ID (you choose this name)
+  # It's used internally to reference this job
+  test:
+
+    # ── DISPLAY NAME ──
+    # This appears in the GitHub UI
+    name: "Run Tests"
+
+    # ── RUNNER ──
+    # Which machine should this job run on?
+    runs-on: ubuntu-latest
+
+    # WHAT IS runs-on?
+    #   Every CI job needs a COMPUTER to run on.
+    #   You don't use YOUR computer — GitHub provides one.
+    #
+    #   "ubuntu-latest" = Use the latest Ubuntu Linux machine
+    #
+    #   OPTIONS:
+    #     ubuntu-latest   → Ubuntu Linux (most common choice)
+    #     ubuntu-22.04    → Specific Ubuntu version
+    #     windows-latest  → Windows machine
+    #     macos-latest    → Mac machine
+    #
+    #   This machine is:
+    #     - Brand new (no leftover files from previous runs)
+    #     - Has basic tools (git, curl, etc.) pre-installed
+    #     - Does NOT have Python, Node, Java pre-installed
+    #       (we install those in the steps below)
+    #     - Gets DESTROYED after the job finishes
+    #
+    #   Think of it as:
+    #     GitHub gives you a fresh laptop.
+    #     You do your work.
+    #     They take the laptop back and wipe it.
+
+    # ── STEPS ──
+    # The ordered list of things to do on that machine.
+    # Steps run one after another, top to bottom.
+    # If any step FAILS, all following steps are SKIPPED.
+    steps:
+
+      # ╔═════════════════════════════════════════════════╗
+      # ║ STEP 1: Checkout the code                       ║
+      # ╚═════════════════════════════════════════════════╝
+      - name: "📥 Checkout code"
+        uses: actions/checkout@v4
+
+        # WHAT IS "uses:"?
+        #   "uses:" means "use a pre-built action from the marketplace"
+        #
+        #   Instead of writing complex commands yourself,
+        #   someone already created a reusable "action" that
+        #   you can just plug in.
+        #
+        #   It's like using an app from the App Store
+        #   instead of building the app yourself.
+        #
+        # WHAT IS "actions/checkout@v4"?
+        #   "actions" = The organization (GitHub's official actions)
+        #   "checkout" = The action name (downloads your code)
+        #   "@v4" = Version 4 of this action
+        #
+        #   This lives at: github.com/actions/checkout
+        #
+        # WHY DO WE NEED THIS?
+        #   Remember: the CI machine is brand new and EMPTY.
+        #   It has NO code on it.
+        #   This step downloads YOUR repository code onto the machine.
+        #
+        #   Without this step:
+        #     The machine has no files.
+        #     pytest tests/ would fail with "No such file or directory"
+        #
+        #   After this step:
+        #     All your project files are on the machine:
+        #     src/calculator.py, tests/test_calculator.py, etc.
+
+      # ╔═════════════════════════════════════════════════╗
+      # ║ STEP 2: Install Python                          ║
+      # ╚═════════════════════════════════════════════════╝
+      - name: "🐍 Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+        # WHAT IS "with:"?
+        #   "with:" passes configuration OPTIONS to the action.
+        #   It's like settings/preferences.
+        #
+        #   Here we're telling setup-python:
+        #     "Install Python version 3.11"
+        #
+        #   Without "with:", it would install a default version
+        #   which might not be what we want.
+        #
+        # WHY DO WE NEED THIS?
+        #   The Ubuntu machine doesn't have Python 3.11 ready.
+        #   This step downloads and installs it.
+        #
+        # WHAT IS "actions/setup-python@v5"?
+        #   Another official action from GitHub.
+        #   It knows how to install any Python version.
+        #   Lives at: github.com/actions/setup-python
+
+      # ╔═════════════════════════════════════════════════╗
+      # ║ STEP 3: Install project dependencies            ║
+      # ╚═════════════════════════════════════════════════╝
+      - name: "📦 Install dependencies"
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+        # WHAT IS "run:"?
+        #   "run:" means "execute these shell commands"
+        #   These are regular terminal commands, just like
+        #   what you typed on your own computer.
+        #
+        # WHAT IS "|"?
+        #   The pipe character after "run:" means
+        #   "the following MULTIPLE lines are all commands"
+        #   Without |, you can only write one line.
+        #
+        #   run: echo "single command"        ← one command
+        #   run: |                             ← multiple commands
+        #     echo "command 1"
+        #     echo "command 2"
+        #
+        # COMMAND 1: python -m pip install --upgrade pip
+        #   "python -m pip" = Run pip using Python
+        #   "install --upgrade pip" = Update pip itself to latest
+        #   WHY? The pre-installed pip might be old.
+        #   Old pip might not install packages correctly.
+        #
+        # COMMAND 2: pip install -r requirements.txt
+        #   Same as what you did locally!
+        #   Installs pytest and pytest-cov.
+        #
+        # AFTER THIS STEP:
+        #   The CI machine now has:
+        #     ✅ Your code (from step 1)
+        #     ✅ Python 3.11 (from step 2)
+        #     ✅ pytest and pytest-cov (from this step)
+        #   It's ready to run tests!
+
+      # ╔═════════════════════════════════════════════════╗
+      # ║ STEP 4: Run the tests                           ║
+      # ╚═════════════════════════════════════════════════╝
+      - name: "🧪 Run tests"
+        run: |
+          pytest tests/ -v
+
+        # This is the same command you ran locally!
+        #
+        # pytest tests/ -v
+        #   → Find all test files in tests/
+        #   → Run all test functions
+        #   → Show verbose output
+        #
+        # WHAT HAPPENS BASED ON RESULTS:
+        #
+        #   ALL TESTS PASS:
+        #     pytest exits with code 0 (success)
+        #     GitHub marks this step as ✅
+        #     GitHub marks the whole job as ✅
+        #     On the PR page: green checkmark ✅
+        #
+        #   ANY TEST FAILS:
+        #     pytest exits with code 1 (failure)
+        #     GitHub marks this step as ❌
+        #     GitHub marks the whole job as ❌
+        #     On the PR page: red X ❌
+        #     All subsequent steps are SKIPPED
+        #
+        # EXIT CODES EXPLAINED:
+        #   Every command returns a number when it finishes:
+        #     0 = success (everything went fine)
+        #     1 = failure (something went wrong)
+        #     Any non-zero = failure
+        #
+        #   GitHub Actions checks this number.
+        #   If it's 0 → step passed.
+        #   If it's not 0 → step failed.
